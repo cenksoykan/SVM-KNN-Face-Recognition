@@ -5,9 +5,10 @@ name = "pypi"
 
 [packages]
 scikit-learn = "*"
-cvxopt = "*"
+scikit-image = "*"
 scipy = "*"
-pillow = "*"
+matplotlib = "*"
+cvxopt = "==1.1.9"
 
 [dev-packages]
 pylint = "*"
