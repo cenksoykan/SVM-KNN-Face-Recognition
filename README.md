@@ -1,6 +1,6 @@
 # Report
 
-## Task 1: Classification using PCA + 1NN with 5-fold cross validation
+## Classification using PCA + 1NN with 5-fold cross validation
 
 For PCA:
 
@@ -18,13 +18,13 @@ For 1NN:
 
 After the 5-fold cross validation, the average accuracy for **PCA + 1NN** was 96.75%
 
-## Task 2: Repeating Task 1 after resizing the images from 112 x 92 to 56 x 46
+## Repeating Task 1 after resizing the images from 112 x 92 to 56 x 46
 
 The average accuracy after **Resizing Images + PCA + 1NN** was 96.0%
 
 Comparing this with the original dimensions accuracy, there does not seem to be much change in the accuracy.
 
-## Task 3: Classification using LDA + 1NN with 5-fold cross validation
+## Classification using LDA + 1NN with 5-fold cross validation
 
 For LDA:
 
@@ -37,13 +37,13 @@ For LDA:
 
 After the 5-fold cross validation, the average accuracy for **LDA + 1NN** was 96.0%
 
-## Task 4: Classification using PCA + LDA + 1NN with 5-fold cross validation
+## Task 1: Classification using PCA + LDA + 1NN with 5-fold cross validation
 
 After the 5-fold cross validation, the average accuracy for **PCA + LDA + 1NN** was 98.0%
 
 Comparing this with previous results we can see that PCA before LDA helps increasing the accuracy of 1NN.
 
-## Task 5: Classification using SVM with 5-fold cross validation
+## Task 2: Classification using SVM with 5-fold cross validation
 
 For SVM:
 
@@ -55,7 +55,7 @@ For SVM:
 
 After the 5-fold cross validation, the average accuracy for **SVM** was 97.4%
 
-## Task 6: Classification using PCA + SVM with 5-fold cross validation
+## Task 3: Classification using PCA + SVM with 5-fold cross validation
 
 After the 5-fold cross validation, the average accuracy for **PCA + SVM** was 92.7%
 
