@@ -14,13 +14,14 @@ References ->
 """
 
 import os
-import math
+
 import cvxopt
-import scipy.misc
 import numpy as np
 from sklearn import model_selection
+from skimage import io
+from skimage.transform import rescale
 
-#from sklearn.utils import shuffle
+# from sklearn.utils import shuffle
 # from matplotlib import pyplot
 
 
@@ -172,34 +173,33 @@ def kNN(X_train, y_train, X_test, y_test):
         c = np.sum(predicted == correct)
         total_corr += c
         i += 1
-    print("Accuracy is ", float(total_corr) / 80 * 10)
-    return float(total_corr) / 80 * 100
+    accuracy = float(total_corr) / 80 * 100
+    print("Accuracy is ", accuracy)
+    return accuracy
 
 
 if __name__ == "__main__":
 
-    def img_input(resize=False):
+    def img_input():
         X, y = [], []
         path, direc, docs = os.walk("orl_faces").__next__()
         direc.sort()
         # Iterating through each subject
         for subject in direc:
-            files = os.listdir(path + '/' + subject)
+            subject_dir = os.path.join(path, subject)
+            files = os.listdir(subject_dir)
             for file in files:
-                img = scipy.misc.imread(
-                    path + '/' + subject + '/' + file).astype(np.float32)
-                if resize:
-                    img = scipy.misc.imresize(img, (56, 46)).astype(np.float32)
+                img_dir = os.path.join(subject_dir, file)
+                img = io.imread(img_dir, as_grey=True).astype(np.uint8)
+                img = rescale(img, 0.5)
                 X.append(img.reshape(-1))
                 y.append(int(subject[1:]))
         X = np.asarray(X)
         y = np.asarray(y)
         return X, y
 
-    def cross_val(X, y, DR=None, Alg=None, All=False):
+    def cross_val(X, y, DR, Alg):
         kf = model_selection.KFold(n_splits=5, shuffle=True)
-        avg_acc_p = []
-        avg_acc_l = []
         avg_acc_pl = []
         avg_acc_svm = []
         avg_acc_svm_pca = []
@@ -208,31 +208,16 @@ if __name__ == "__main__":
             X_train, X_test, y_train, y_test = X[train], X[test], y[train], y[
                 test]
 
-            if DR == 'PCA' and Alg == '1NN' or All:
-                print("\nRunning Fold ", fld, " for PCA + 1NN")
-                X_train_pca, X_test_pca = PCA(X_train, X_test, 70)
-                avg_acc_p.append(kNN(X_train_pca, y_train, X_test_pca, y_test))
-                if not All:
-                    fld += 1
-
-            if DR == 'LDA' and Alg == '1NN' or All:
-                print("\nRunning Fold ", fld, " for LDA + 1NN")
-                X_train_lda, X_test_lda = LDA(X_train, y_train, X_test, 70)
-                avg_acc_l.append(kNN(X_train_lda, y_train, X_test_lda, y_test))
-                if not All:
-                    fld += 1
-
-            if DR == 'PCA+LDA' and Alg == '1NN' or All:
+            if DR == 'PCA+LDA' and Alg == '1NN':
                 print("\nRunning Fold ", fld, " for PCA + LDA + 1NN")
                 X_train_pca, X_test_pca = PCA(X_train, X_test, 70)
                 X_train_pca_lda, X_test_pca_lda = LDA(X_train_pca, y_train,
                                                       X_test_pca, 25)
                 avg_acc_pl.append(
                     kNN(X_train_pca_lda, y_train, X_test_pca_lda, y_test))
-                if not All:
-                    fld += 1
+                fld += 1
 
-            if DR is None and Alg == 'SVM' or All:
+            if DR is None and Alg == 'SVM':
                 print("\nRunning Fold ", fld, " for SVM")
                 # Defining svm model
                 svm = SupportVectorMachine()
@@ -241,7 +226,8 @@ if __name__ == "__main__":
                 accuracies = 0
                 print("Running SVM. Please wait...")
                 for i in range(1, 41):
-                    # Setting the selected class as '1' and rest as '-1' depicting the One vs Rest classification.
+                    # Setting the selected class as '1' and rest as '-1'
+                    # depicting the One vs Rest classification.
                     for j in range(0, 320):
                         if y_train[j] == (i):
                             y_train_ovr[j] = 1
@@ -258,13 +244,12 @@ if __name__ == "__main__":
                     predict_class = svm.predict(X_test)
                     c = np.sum(predict_class == y_test_ovr)
                     accuracies += float(c) / len(predict_class) * 100
-                accuracy = math.ceil(accuracies / 40)
+                accuracy = accuracies / 40
                 print("Accuracy is ", accuracy)
                 avg_acc_svm.append(accuracy)
-                if not All:
-                    fld += 1
+                fld += 1
 
-            if DR == 'PCA' and Alg == 'SVM' or All:
+            if DR == 'PCA' and Alg == 'SVM':
                 print("\nRunning Fold ", fld, " for PCA + SVM")
                 X_train_pca, X_test_pca = PCA(X_train, X_test, 70)
                 svm = SupportVectorMachine()
@@ -273,7 +258,8 @@ if __name__ == "__main__":
                 accuracies_pca = 0
                 print("Running SVM. Please wait...")
                 for i in range(1, 41):
-                    # Setting the selected class as '1' and rest as '-1' depicting the One vs Rest classification.
+                    # Setting the selected class as '1' and rest as '-1'
+                    # depicting the One vs Rest classification.
                     for j in range(0, 320):
                         if y_train[j] == (i):
                             y_train_ovr[j] = 1
@@ -289,96 +275,51 @@ if __name__ == "__main__":
                     svm.train(X_train_pca, y_train_ovr)
                     predict_class = svm.predict(X_test_pca)
                     c = np.sum(predict_class == y_test_ovr)
-                    accuracies_pca += math.ceil(
-                        float(c) / len(predict_class) * 100)
+                    accuracies_pca += float(c) / len(predict_class) * 100
                 accuracy = accuracies_pca / 40.0
                 print("Accuracy is ", accuracy)
                 avg_acc_svm_pca.append(accuracy)
-                if not All:
-                    fld += 1
-            if All:
                 fld += 1
 
             print("\n")
-        if DR == 'PCA' and Alg == '1NN' or All:
-            print("Average accuracy for PCA + 1NN ",
-                  sum(avg_acc_p) / 5.0, "\n")
 
-        if DR == 'LDA' and Alg == '1NN' or All:
-            print("Average accuracy for LDA + 1NN ",
-                  sum(avg_acc_l) / 5.0, "\n")
-
-        if DR == 'PCA+LDA' and Alg == '1NN' or All:
+        if DR == 'PCA+LDA' and Alg == '1NN':
             print("Average accuracy for PCA + LDA + 1NN ",
                   sum(avg_acc_pl) / 5.0, "\n")
 
-        if DR is None and Alg == 'SVM' or All:
+        if DR is None and Alg == 'SVM':
             print("Average accuracy for SVM ", sum(avg_acc_svm) / 5.0, "\n")
 
-        if DR == 'PCA' and Alg == 'SVM' or All:
+        if DR == 'PCA' and Alg == 'SVM':
             print("Average accuracy for PCA + SVM ",
                   sum(avg_acc_svm_pca) / 5.0, "\n")
 
     def task_selector():
         print("\n")
         choice = int(
-            input("1: PCA + 1NN \n"
-                  "2: Resized Images + PCA + 1NN \n"
-                  "3: LDA + 1NN \n"
-                  "4: PCA + LDA + 1NN \n"
-                  "5: SVM \n"
-                  "6: PCA + SVM \n"
-                  "7: Run all tasks \n"
+            input("1: PCA + LDA + 1NN \n"
+                  "2: SVM \n"
+                  "3: PCA + SVM \n"
                   "0: To quit \n"
                   "Please enter your choice: "))
         print("\n")
+
         if choice == 1:
-            print("Running Task 1: PCA + 1NN")
-            X, y = img_input()
-            cross_val(X, y, DR='PCA', Alg='1NN')
-            task_selector()
-
-        elif choice == 2:
-            print("Running Task 2: Resized Images + PCA + 1NN")
-            X, y = img_input(resize=True)
-            cross_val(X, y, DR='PCA', Alg='1NN')
-            task_selector()
-
-        elif choice == 3:
-            print("Running Task 3: LDA + 1NN")
-            X, y = img_input()
-            cross_val(X, y, DR='LDA', Alg='1NN')
-            task_selector()
-
-        elif choice == 4:
-            print("Running Task 4: PCA + LDA + 1NN")
+            print("Running Task 1: PCA + LDA + 1NN")
             X, y = img_input()
             cross_val(X, y, DR='PCA+LDA', Alg='1NN')
             task_selector()
 
-        elif choice == 5:
-            print("Running Task 5: SVM\n")
+        elif choice == 2:
+            print("Running Task 2: SVM\n")
             X, y = img_input()
             cross_val(X, y, DR=None, Alg='SVM')
             task_selector()
 
-        elif choice == 6:
-            print("Running Task 6: PCA + SVM")
+        elif choice == 3:
+            print("Running Task 3: PCA + SVM")
             X, y = img_input()
             cross_val(X, y, DR='PCA', Alg='SVM')
-            task_selector()
-
-        elif choice == 7:
-            print("Running All Tasks")
-
-            print("Running Task 2: Resized Images + PCA + 1NN")
-            X, y = img_input(resize=True)
-            cross_val(X, y, DR='PCA', Alg='1NN')
-
-            print("Running Rest of the Tasks, from 1,3-6")
-            X, y = img_input()
-            cross_val(X, y, All=True)
-
             task_selector()
 
         elif choice == 0:
