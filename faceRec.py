@@ -1,9 +1,4 @@
 """
-Dependencies ->
-    Please install:
-    'CVXOPT' library for python used to solve quadratic equations
-    'scipy' library used for reading images
-
 References ->
     https://www.youtube.com/user/sentdex/videos
     http://cvxopt.org/examples/tutorial/qp.html
